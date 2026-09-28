@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.mall2.Product.mapper.ProductMapper">
+    <!-- ==================== 基础字段映射 ==================== -->
+    <resultMap id="BaseResultMap" type="com.mall2.Product.model.Product">
+        <id column="id" property="id"/>
+        <result column="product_sn" property="productSn"/>
+        <result column="name" property="name"/>
+        <result column="sub_title" property="subTitle"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="brand_id" property="brandId"/>
+        <result column="price" property="price"/>
+        <result column="original_price" property="originalPrice"/>
+        <result column="stock" property="stock"/>
+        <result column="unit" property="unit"/>
+        <result column="pic" property="pic"/>
+        <result column="album_pics" property="albumPics"/>
+        <result column="description" property="description"/>
+        <result column="detail_html" property="detailHtml"/>
+        <result column="sale" property="sale"/>
+        <result column="sort" property="sort"/>
+        <result column="publish_status" property="publishStatus"/>
+        <result column="verify_status" property="verifyStatus"/>
+        <result column="reject_reason" property="rejectReason"/>
+        <result column="delete_status" property="deleteStatus"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_by" property="createBy"/>
+        <result column="version" property="version"/>
+    </resultMap>
+
+    <!-- ==================== 基础字段列表 ==================== -->
+    <sql id="Base_Column_List">
+        id, product_sn, name, sub_title, category_id, brand_id,
+        price, original_price, stock, unit, pic, album_pics,
+        description, detail_html, sale, sort,
+        publish_status, verify_status,
+        reject_reason,  <!-- 新增驳回原因 -->
+        delete_status,
+        create_time, update_time, create_by,version
+    </sql>
+
+    <!-- ==================== 条件分页查询 ==================== -->
+    <select id="selectByQuery" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM product
+        <where>
+            delete_status = 0
+#             直接如果已经被删除的商品在查询时不会被查出来
+            <if test="keyword != null and keyword != ''">
+                AND name LIKE CONCAT('%', #{keyword}, '%')
+            </if>
+            <if test="productSn != null and productSn != ''">
+                AND product_sn = #{productSn}
+            </if>
+            <if test="categoryId != null">
+                AND category_id = #{categoryId}
+            </if>
+            <if test="brandId != null">
+                AND brand_id = #{brandId}
+            </if>
+            <if test="publishStatus != null">
+                AND publish_status = #{publishStatus}
+            </if>
+            <if test="verifyStatus != null">
+                AND verify_status = #{verifyStatus}
+            </if>
+        </where>
+        ORDER BY sort DESC, create_time DESC
+    </select>
+
+    <!-- ==================== 根据ID查询 ==================== -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM product
+        WHERE id = #{id}
+        AND delete_status = 0
+    </select>
+
+    <!-- ==================== 新增商品 ==================== -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO product (
+            product_sn, name, sub_title, category_id, brand_id,
+            price, original_price, stock, unit, pic, album_pics,
+            description, detail_html, sale, sort,
+            publish_status, verify_status, reject_reason,delete_status,
+            create_time, update_time, create_by,version
+        ) VALUES (
+                     #{productSn}, #{name}, #{subTitle}, #{categoryId}, #{brandId},
+                     #{price}, #{originalPrice}, #{stock}, #{unit}, #{pic}, #{albumPics},
+                     #{description}, #{detailHtml}, #{sale}, #{sort},
+                     #{publishStatus}, #{verifyStatus},#{rejectReason}, 0,
+                     NOW(), NOW(), #{createBy},0
+                 )
+    </insert>
+
+    <!-- ==================== 更新商品【修复版】==================== -->
+    <update id="updateById">
+        UPDATE product
+        <set>
+            <!-- 【业务约束：商品编号不允许置空，保留 != ''判断】 -->
+            <if test="productSn != null and productSn != ''">product_sn = #{productSn},</if>
+            <!-- name业务不允许为空，保留判断 -->
+            <if test="name != null and name != ''">name = #{name},</if>
+
+            <!-- 普通字符串：只判断null；前端传""空字符串就会把数据库置空 -->
+            <if test="subTitle != null">sub_title = #{subTitle},</if>
+            <if test="unit != null">unit = #{unit},</if>
+            <if test="pic != null">pic = #{pic},</if>
+            <if test="albumPics != null">album_pics = #{albumPics},</if>
+            <if test="description != null">description = #{description},</if>
+            <if test="detailHtml != null">detail_html = #{detailHtml},</if>
+
+            <!-- 数字类型只判null，数字0属于合法业务值 -->
+            <if test="categoryId != null">category_id = #{categoryId},</if>
+            <if test="brandId != null">brand_id = #{brandId},</if>
+            <if test="price != null">price = #{price},</if>
+            <if test="originalPrice != null">original_price = #{originalPrice},</if>
+            <if test="stock != null">stock = #{stock},</if>
+            <if test="sale != null">sale = #{sale},</if>
+            <if test="sort != null">sort = #{sort},</if>
+            <if test="publishStatus != null">publish_status = #{publishStatus},</if>
+            <if test="verifyStatus != null">verify_status = #{verifyStatus},</if>
+            <if test="rejectReason != null and rejectReason != ''">reject_reason = #{rejectReason},</if>
+            <if test="createBy != null">create_by = #{createBy},</if>
+
+            update_time = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- ==================== 逻辑删除 ==================== -->
+    <update id="deleteById">
+        UPDATE product
+        SET delete_status = 1,
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+
+
+    <!-- 乐观锁扣减库存 -->
+<!--  先去锁定id,然后看库存数是否大于quantity,再判断版本号是否照应    -->
+    <update id="decreaseStock">
+        UPDATE product
+        SET stock = stock - #{quantity},
+            version = version + 1
+        WHERE id = #{productId}
+          AND stock >= #{quantity}
+          AND version = #{version}
+    </update>
+    <!-- ==========新增：乐观锁回补库存（订单取消） ========== -->
+    <update id="increaseStock">
+        UPDATE product
+        SET stock = stock + #{quantity},
+            version = version + 1
+        WHERE id = #{productId}
+          AND version = #{version}
+    </update>
+
+</mapper>
