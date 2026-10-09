@@ -129,6 +129,8 @@ mvn clean package -DskipTests   # 输出至 target/mall2-*.jar
 ### 数据概览（/dashboard）
 
 ![数据概览](docs/screenshots/dashboard.png)
+<img width="2423" height="1361" alt="image" src="https://github.com/user-attachments/assets/d0db0c82-310a-428b-9f4c-0e3ce28a9bd6" />
+
 
 ### 商品管理（/product）
 
