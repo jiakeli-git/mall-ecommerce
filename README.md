@@ -135,10 +135,14 @@ mvn clean package -DskipTests   # 输出至 target/mall2-*.jar
 ### 商品管理（/product）
 
 ![商品管理](docs/screenshots/product-list.png)
+<img width="2416" height="1358" alt="image" src="https://github.com/user-attachments/assets/15f4f0be-659c-4763-ba5a-45bb34db0a21" />
+
 
 ### 订单管理（/order）
 
 ![订单管理](docs/screenshots/order-list.png)
+<img width="2419" height="1348" alt="image" src="https://github.com/user-attachments/assets/9a35feab-71dd-4a1a-93e6-d40b10162b42" />
+
 
 > 📸 截图基于 Mock 演示数据生成（1600×900）。若需重新生成：启动后端 + `npm run preview` 后，用无头 Edge 截取即可，例如
 > `msedge --headless --disable-gpu --screenshot=dashboard.png --window-size=1600,900 http://localhost:5173/dashboard`
