@@ -126,12 +126,20 @@ mvn clean package -DskipTests   # 输出至 target/mall2-*.jar
 
 ## 截图展示
 
-<!-- 
-如需重新生成前端截图，可在启动后端 + 前端 dev server 后运行：
-  npx puppeteer screenshot http://localhost:5173/dashboard ./dashboard.png
--->
+### 数据概览（/dashboard）
 
-> 📸 截图在本地开发环境下自行生成参考本仓库的 `docs/screenshots/` 路径。
+![数据概览](docs/screenshots/dashboard.png)
+
+### 商品管理（/product）
+
+![商品管理](docs/screenshots/product-list.png)
+
+### 订单管理（/order）
+
+![订单管理](docs/screenshots/order-list.png)
+
+> 📸 截图基于 Mock 演示数据生成（1600×900）。若需重新生成：启动后端 + `npm run preview` 后，用无头 Edge 截取即可，例如
+> `msedge --headless --disable-gpu --screenshot=dashboard.png --window-size=1600,900 http://localhost:5173/dashboard`
 
 ## License
 
