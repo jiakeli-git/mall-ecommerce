@@ -1,19 +1,41 @@
-# Java / Maven
-target/
-!.mvn/wrapper/maven-wrapper.jar
+# ==================== 全局忽略规则 ====================
 
-# IDEA
+# ---- 前端 (frontend/) ----
+node_modules/
+dist/
+dist-ssr/
+coverage/
+*.local
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+.eslintcache
+*.tsbuildinfo
+*.timestamp-*-*.mjs
+
+# ---- 后端 (backend/) ----
+backend/target/
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/src/main/resources/application.yml
+backend/src/main/resources/application.yaml
+
+# ---- IDE / 编辑器 ----
 .idea/
+.vscode/*
+!.vscode/extensions.json
 *.iml
 *.iws
 *.ipr
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# 操作系统
+# ---- 操作系统 ----
 .DS_Store
-
-# VSCode
-.vscode/
-
-# 环境配置（重点！不要上传密钥！）
-src/main/resources/application.yml
-src/main/resources/application.yaml
+Thumbs.db

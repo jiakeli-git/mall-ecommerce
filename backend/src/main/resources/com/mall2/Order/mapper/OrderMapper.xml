@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace 必须和 Mapper 接口的全限定类名完全一致 -->
+<mapper namespace="com.mall2.Order.mapper.OrderMapper">
+
+    <!--
+        ✅ 修正点：type 改为 Order 实体类的全限定类名
+        请替换成你项目中 Order.java 实际的包路径，示例为 com.mall2.Order.model.Order
+    -->
+    <resultMap id="BaseResultMap" type="com.mall2.Order.model.Order">
+        <!-- 主键字段 -->
+        <id column="id" property="id" jdbcType="BIGINT"/>
+        <!-- 订单基础字段 -->
+        <result column="order_sn" property="orderSn" jdbcType="VARCHAR"/>
+        <result column="user_id" property="userId" jdbcType="BIGINT"/>
+        <result column="total_amount" property="totalAmount" jdbcType="DECIMAL"/>
+        <result column="status" property="status" jdbcType="TINYINT"/>
+        <!-- 支付相关字段 -->
+        <result column="pay_time" property="payTime" jdbcType="TIMESTAMP"/>
+        <result column="pay_type" property="payType" jdbcType="TINYINT"/>
+        <!-- 取消相关字段 -->
+        <result column="cancel_time" property="cancelTime" jdbcType="TIMESTAMP"/>
+        <result column="cancel_reason" property="cancelReason" jdbcType="VARCHAR"/>
+        <!-- 其他公共字段 -->
+        <result column="remark" property="remark" jdbcType="VARCHAR"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 通用字段列表 -->
+    <sql id="Base_Column_List">
+        id,
+        order_sn,
+        user_id,
+        total_amount,
+        status,
+        pay_time,
+        pay_type,
+        cancel_time,
+        cancel_reason,
+        remark,
+        create_time,
+        update_time
+    </sql>
+
+    <!-- 新增订单主表：主键回填 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO t_order (
+            order_sn,
+            user_id,
+            total_amount,
+            status,
+            remark
+        ) VALUES (
+                     #{orderSn},
+                     #{userId},
+                     #{totalAmount},
+                     #{status},
+                     #{remark}
+                 )
+    </insert>
+
+    <!-- 主键查询 -->
+    <select id="selectById" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM t_order
+        WHERE id = #{id}
+        LIMIT 1
+    </select>
+
+    <!-- 根据订单号查询 -->
+    <select id="selectByOrderSn" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM t_order
+        WHERE order_sn = #{orderSn}
+        LIMIT 1
+    </select>
+
+    <!-- 动态更新订单 -->
+    <update id="updateById">
+        UPDATE t_order
+        <set>
+            <if test="orderSn != null">order_sn = #{orderSn},</if>
+            <if test="userId != null">user_id = #{userId},</if>
+            <if test="totalAmount != null">total_amount = #{totalAmount},</if>
+            <if test="status != null">status = #{status},</if>
+            <if test="payTime != null">pay_time = #{payTime},</if>
+            <if test="payType != null">pay_type = #{payType},</if>
+            <if test="cancelTime != null">cancel_time = #{cancelTime},</if>
+            <if test="cancelReason != null">cancel_reason = #{cancelReason},</if>
+            <if test="remark != null">remark = #{remark},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <!-- ===== 【新增】OrderVO结果映射：分步加载订单明细items ===== -->
+    <resultMap id="OrderVOResultMap" type="com.mall2.Order.dto.OrderVO">
+        <id column="id" property="id"/>
+        <result column="order_sn" property="orderSn"/>
+        <result column="user_id" property="userId"/>
+        <result column="total_amount" property="totalAmount"/>
+        <result column="status" property="status"/>
+        <result column="status_desc" property="statusDesc"/>
+        <result column="create_time" property="createTime"/>
+        <!-- 子查询加载明细，column="id"把订单id传给下面select -->
+        <collection property="items"
+                    ofType="com.mall2.Order.dto.OrderVO$OrderItemVO"
+                    column="id"
+                    select="selectOrderItemByOrderId"/>
+    </resultMap>
+
+    <!-- ===== 【新增】分页查询主订单列表（PageHelper作用） ===== -->
+    <select id="selectOrderList" resultMap="OrderVOResultMap">
+        SELECT
+        id,
+        order_sn,
+        user_id,
+        total_amount,
+        status,
+        create_time,
+        CASE status
+        WHEN 0 THEN '待支付'
+        WHEN 1 THEN '已支付'
+        WHEN 2 THEN '已取消'
+        ELSE '未知状态'
+        END AS status_desc
+        FROM t_order
+        <where>
+            <if test="orderSn != null and orderSn != ''">
+                order_sn = #{orderSn}
+                <!-- 模糊搜索换成：order_sn LIKE CONCAT('%',#{orderSn},'%') -->
+            </if>
+        </where>
+        ORDER BY create_time DESC
+        <!-- ❗不要写limit，PageHelper自动追加 -->
+    </select>
+
+    <!-- ===== 【新增】子查询：按订单id查明细，映射到OrderItemVO ===== -->
+    <select id="selectOrderItemByOrderId" resultType="com.mall2.Order.dto.OrderVO$OrderItemVO">
+        SELECT
+            product_id,
+            product_name,
+            product_price,
+            quantity,
+            total_price
+        FROM t_order_item
+        WHERE order_id = #{id}
+    </select>
+
+</mapper>
